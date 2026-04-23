@@ -1,0 +1,16 @@
+{
+	"manifest_version": 1,
+	"id": "io.github.willianferreira.willdo",
+	"app_min_version": "3.5",
+	"version": "1.0.0",
+	"name": "WillDo",
+	"description": "Advanced task system for Joplin with subtasks, recurrence, search, and visual organization. Sistema avançado de tarefas para o Joplin, com subtarefas, recorrência, busca e organização visual.",
+	"author": "Willian Ferreira",
+	"homepage_url": "https://github.com/willf444/willdo-joplin-plugin",
+	"repository_url": "https://github.com/willf444/willdo-joplin-plugin",
+	"keywords": [],
+	"categories": [],
+	"screenshots": [],
+	"icons": {},
+	"promo_tile": {}
+}
