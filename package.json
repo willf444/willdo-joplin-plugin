@@ -1,6 +1,7 @@
 {
   "name": "joplin-plugin-willdo",
-  "version": "1.0.0",
+  "version": "1.1.0",
+  "description": "Task manager plugin for Joplin with dates, alarms, recurrence, search, note linking, and quick access to linked notes. Plugin de tarefas para o Joplin com datas, alarmes, recorrência, busca, vínculo com notas e acesso rápido às notas vinculadas.",
   "scripts": {
     "dist": "webpack --env joplin-plugin-config=buildMain && webpack --env joplin-plugin-config=buildExtraScripts && webpack --env joplin-plugin-config=createArchive",
     "prepare": "npm run dist",
