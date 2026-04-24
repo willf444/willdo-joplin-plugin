@@ -82,11 +82,6 @@ async function deleteTodoMirror(task: Task): Promise<Task> {
 
 async function syncTodoMirror(task: Task): Promise<Task> {
 	const dueTime = validDueTime(task.dueAt);
-
-	if (!dueTime) {
-		return await deleteTodoMirror(task);
-	}
-
 	const parent_id = await getWillDoFolderId();
 
 	const payload = {
@@ -94,11 +89,14 @@ async function syncTodoMirror(task: Task): Promise<Task> {
 		title: `[WillDo] ${task.title}`,
 		body: buildTodoBody(task),
 		is_todo: 1,
-		todo_due: dueTime,
+		todo_due: dueTime || 0,
 		todo_completed: task.completed ? Date.now() : 0,
 		application_data: JSON.stringify({
 			app: 'WillDo',
 			taskId: task.id,
+			recurrence: normalizeRecurrence(task.recurrence),
+			noteId: task.noteId || '',
+			noteTitle: task.noteTitle || '',
 		}),
 	};
 
@@ -115,6 +113,92 @@ async function syncTodoMirror(task: Task): Promise<Task> {
 		...task,
 		joplinTodoId: created?.id || '',
 	};
+}
+
+function parseWillDoTaskFromNote(note: any): Task | null {
+	if (!note || note.is_todo !== 1) return null;
+
+	let appData: any = {};
+	try {
+		appData = note.application_data ? JSON.parse(note.application_data) : {};
+	} catch {
+		appData = {};
+	}
+
+	if (appData?.app !== 'WillDo') return null;
+
+	const title = String(note.title || '').replace(/^\[WillDo\]\s*/, '').trim();
+	if (!title) return null;
+
+	const dueMs = Number(note.todo_due || 0);
+	const completedMs = Number(note.todo_completed || 0);
+
+	return {
+		id: String(appData.taskId || note.id),
+		title,
+		completed: completedMs > 0,
+		createdAt: note.created_time ? new Date(note.created_time).toISOString() : new Date().toISOString(),
+		dueAt: dueMs > 0 ? new Date(dueMs).toISOString() : '',
+		noteId: String(appData.noteId || ''),
+		noteTitle: String(appData.noteTitle || ''),
+		joplinTodoId: String(note.id || ''),
+		recurrence: normalizeRecurrence(appData.recurrence),
+	};
+}
+
+async function listWillDoMirrorNotes(): Promise<any[]> {
+	const folderId = await getWillDoFolderId();
+	const all: any[] = [];
+	let page = 1;
+
+	while (true) {
+		const result = await joplin.data.get(['folders', folderId, 'notes'], {
+			fields: ['id', 'title', 'is_todo', 'todo_due', 'todo_completed', 'application_data', 'created_time', 'updated_time'],
+			limit: 100,
+			page,
+		});
+
+		all.push(...(result?.items || []));
+
+		if (!result?.has_more) break;
+		page++;
+	}
+
+	return all;
+}
+
+async function reconcileWillDoTasks(): Promise<Task[]> {
+	const localTasks = await loadTasks();
+	const byId = new Map<string, Task>();
+
+	for (const task of localTasks) {
+		byId.set(task.id, task);
+	}
+
+	const notes = await listWillDoMirrorNotes();
+
+	for (const note of notes) {
+		const fromNote = parseWillDoTaskFromNote(note);
+		if (!fromNote) continue;
+
+		const existing = byId.get(fromNote.id);
+
+		byId.set(fromNote.id, {
+			...fromNote,
+			recurrence: normalizeRecurrence(existing?.recurrence || fromNote.recurrence),
+			noteId: existing?.noteId || fromNote.noteId,
+			noteTitle: existing?.noteTitle || fromNote.noteTitle,
+		});
+	}
+
+	const reconciled: Task[] = [];
+
+	for (const task of byId.values()) {
+		reconciled.push(await syncTodoMirror(task));
+	}
+
+	await saveTasks(reconciled);
+	return reconciled;
 }
 
 
@@ -601,7 +685,7 @@ joplin.plugins.register({
 		const panel = await joplin.views.panels.create('willdo.panel');
 
 		const refreshPanel = async () => {
-			const tasks = await loadTasks();
+			const tasks = await reconcileWillDoTasks();
 			await joplin.views.panels.setHtml(panel, renderTasks(tasks));
 			await joplin.views.panels.addScript(panel, './webview.js');
 		};
