@@ -1,7 +1,7 @@
 {
   "name": "joplin-plugin-willdo",
-  "version": "1.1.2",
-  "description": "Task manager for Joplin with dates, alarms, recurrence, search, note linking, and quick access to linked notes. Interface currently in Brazilian Portuguese. On Android, allow notifications for the Joplin app in system settings so alarms can work. PT-BR: Plugin de tarefas para o Joplin com datas, alarmes, recorrência, busca, vínculo com notas e acesso rápido às notas vinculadas. Interface em português do Brasil. No Android, permita notificações do aplicativo Joplin nas configurações do sistema para os alarmes funcionarem.",
+  "version": "1.1.3",
+  "description": "Task manager for Joplin: dates, alarms, recurrence, search and linked notes. Interface in Brazilian Portuguese. Android: enable Joplin notifications. PT-BR: Tarefas no Joplin com datas, alarmes, recorrência e busca. Android: permita notificações.",
   "scripts": {
     "dist": "webpack --env joplin-plugin-config=buildMain && webpack --env joplin-plugin-config=buildExtraScripts && webpack --env joplin-plugin-config=createArchive",
     "prepare": "npm run dist",
