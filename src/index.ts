@@ -617,7 +617,8 @@ div:has(> #quickTask):has(> #addBtn) {
 			<div class="wrap">
 				<div class="card">
 					<h1>WillDo</h1>
-					<div class="muted">Cria com Enter e edita só o que precisar.</div>
+					<div class="muted">Cria com Enter e edita só o que precisar.
+<button id="willdoRefreshBtn" title="Atualizar" aria-label="Atualizar tarefas" onclick="webviewApi.postMessage({ type: 'refreshPanel' })" style="margin-left:6px;border:0;background:transparent;color:#777;font-size:13px;line-height:1;padding:1px 4px;cursor:pointer;">↻</button></div>
 					<div class="donation-box">
 						<div class="donation-line">Gostou do plugin? Contribua com um pix email:</div>
 						<div class="donation-actions">
@@ -695,6 +696,11 @@ joplin.plugins.register({
 
 		await joplin.views.panels.onMessage(panel, async (message: any) => {
 			const tasks = await loadTasks();
+
+			if (message?.type === 'refreshPanel') {
+				await refreshPanel();
+				return;
+			}
 
 			if (message?.type === 'addTask') {
 				const title = String(message.title || '').trim();
